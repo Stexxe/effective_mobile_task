@@ -1,3 +1,4 @@
 webservers:
   hosts:
-    hetzner.srv
+    webserver1:
+    webserver2:
