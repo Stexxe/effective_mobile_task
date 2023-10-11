@@ -1,0 +1,59 @@
+- name: Install aptitude
+  apt:
+    name: aptitude
+    state: latest
+    update_cache: true
+- name: Install required system packages
+  apt:
+    pkg:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - software-properties-common
+    - python3-pip
+    - virtualenv
+    - python3-setuptools
+    state: latest
+- name: Add Docker GPG apt Key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+- name: Add Docker Repository
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu focal stable
+    state: present
+- name: Update apt and install docker-ce
+  apt:
+    pkg:
+    - docker-ce
+    - docker-compose
+    state: latest
+- name: Install required modules for Python
+  pip:
+    name:
+    - docker
+    - PyYAML
+- name: Copy application files
+  ansible.builtin.copy:
+    src: app/
+    dest: /tmp/app/
+- name: write hostname using jinja2
+  ansible.builtin.template:
+    src: templates/nginx-default.j2
+    dest: /tmp/app/default.conf
+- name: Create and start services
+  community.docker.docker_compose:
+    project_src: /tmp/app
+    restarted: true
+  register: output
+- name: Forward traffic to a local port
+  ansible.builtin.iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: eth0
+    protocol: tcp
+    match: tcp
+    destination_port: 80
+    jump: REDIRECT
+    to_ports: 8080
+  become: yes

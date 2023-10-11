@@ -1,0 +1,3 @@
+webservers:
+  hosts:
+    hetzner.srv
